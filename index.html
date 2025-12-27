@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mr.Ghost Hosting Panel</title>
+
+<style>
+body{
+    background:#0d0d0d;
+    color:white;
+    font-family:Arial;
+}
+h1{text-align:center;color:#00ffcc}
+.box{
+    border:1px solid #333;
+    padding:15px;
+    margin:15px;
+    border-radius:8px;
+    background:#151515;
+}
+button{
+    padding:7px 14px;
+    margin:3px;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+}
+.run{background:#1abc9c;color:black}
+.stop{background:#e74c3c;color:white}
+.restart{background:#f39c12;color:black}
+.delete{background:#555;color:white}
+pre{
+    background:black;
+    color:#00ff00;
+    height:180px;
+    overflow:auto;
+    padding:10px;
+}
+.status-run{color:#00ff00;font-weight:bold}
+.status-stop{color:#ff4d4d;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<h1>👻 Mr.Ghost Hosting Panel</h1>
+
+<div class="box">
+<input type="file" id="zipInput" accept=".zip">
+<button onclick="uploadZip()">📤 Upload ZIP</button>
+</div>
+
+<div id="apps"></div>
+
+<script>
+let apps = JSON.parse(localStorage.getItem("apps") || "[]");
+
+function save(){
+    localStorage.setItem("apps", JSON.stringify(apps));
+}
+
+function uploadZip(){
+    const file = document.getElementById("zipInput").files[0];
+    if(!file) return alert("Select ZIP file");
+    apps.push({
+        name:file.name.replace(".zip",""),
+        running:false,
+        log:""
+    });
+    save();
+    render();
+}
+
+function runApp(i){
+    apps[i].running = true;
+    apps[i].log += "▶ App started...\n";
+    save(); render();
+    fakeLog(i);
+}
+
+function stopApp(i){
+    apps[i].running = false;
+    apps[i].log += "🛑 App stopped.\n";
+    save(); render();
+}
+
+function restartApp(i){
+    apps[i].log += "🔄 Restarting...\n";
+    runApp(i);
+}
+
+function deleteApp(i){
+    if(confirm("Delete this app?")){
+        apps.splice(i,1);
+        save(); render();
+    }
+}
+
+function fakeLog(i){
+    if(!apps[i].running) return;
+    apps[i].log += "Running... " + new Date().toLocaleTimeString() + "\n";
+    save(); render();
+    setTimeout(()=>fakeLog(i),2000);
+}
+
+function render(){
+    const div = document.getElementById("apps");
+    div.innerHTML="";
+    apps.forEach((a,i)=>{
+        div.innerHTML += `
+        <div class="box">
+            <h3>${a.name} —
+            ${a.running
+                ?'<span class="status-run">RUNNING</span>'
+                :'<span class="status-stop">STOPPED</span>'}
+            </h3>
+
+            <button class="run" onclick="runApp(${i})">▶ Run</button>
+            <button class="stop" onclick="stopApp(${i})">🛑 Stop</button>
+            <button class="restart" onclick="restartApp(${i})">🔄 Restart</button>
+            <button class="delete" onclick="deleteApp(${i})">🗑 Delete</button>
+
+            <pre>${a.log}</pre>
+        </div>
+        `;
+    });
+}
+
+render();
+</script>
+
+</body>
+</html>
